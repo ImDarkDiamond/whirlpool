@@ -7,8 +7,8 @@ emoji_key = {
     "pardon": "🏳️",
     "mute": "🔇",
     "unmute": "🔊",
-    "note_add": "🗒️",
-    "note_remove": "❌",
+    "notes_added": "🗒️",
+    "notes_removed": "❌",
 }
 # Emojis used in modlogs.
 
@@ -17,7 +17,7 @@ message_key = {
     "id_shortcut": "(ID:`{id}`)",
     "strike_shortcut": "`[{old} → {new}]`",
     # This is so we can just add like `{quick_user}` in the following messages
-    "tempmute": "{mod} banned {user} {user_id} for {time}",
+    "tempmute": "{mod} tempmuted {user} {user_id} for {time}",
     "ban": "{mod} banned {user} {user_id}",
     "unban": "{mod} unbanned {user} {user_id}",
     "kick": "{mod} kicked {user} {user_id}",
@@ -25,8 +25,8 @@ message_key = {
     "pardon": "{mod} pardoned `{strikes_removed}` strikes {strikes} from {user} {user_id}",
     "mute": "{mod} muted {user} {user_id}",
     "unmute": "{mod} unmuted {user} {user_id}",
-    "notes_add": "{mod} gave `{notes_added}` to {user} {user_id}",
-    "notes_removed": "{mod} removed `{notes_removed}` from {user} {user_id}",
+    "notes_added": "{mod} gave `{notes_added}` notes to {user} {user_id}",
+    "notes_removed": "{mod} removed `{notes_removed}` notes from {user} {user_id}",
 }
 
 # Messages used in modlogs. Not currently translated, but will most likely in the future.
