@@ -1,6 +1,6 @@
 from discord.ext import commands
 import discord
-from utils._config import Config
+from utilities._config import Config
 import datetime, re
 import json, asyncio
 import logging
@@ -49,6 +49,7 @@ class TeddyBear(commands.AutoShardedBot):
         self.resumes = defaultdict(list)
         self.identifies = defaultdict(list)
         self.pool = None
+        self.db = self.pool
         self.prefixes = Config("prefixes.json")
         self.blacklist = Config('blacklist.json')
         self._prev_events = deque(maxlen=10)
@@ -57,6 +58,18 @@ class TeddyBear(commands.AutoShardedBot):
         self.started_at = datetime.datetime.utcnow()
         self.message_counters = {"bots":0,"users":0,"commands":0,"self":0}
         self.owners = list()
+        self.initial_extensions = [
+            "cogs.owner",
+            "cogs.stats",
+            "cogs.mod",
+            "cogs.settings"
+        ]
+
+        for extension in self.initial_extensions:
+            try:
+                self.load_extension(extension)
+            except Exception as err:
+                log.error(f"Error while loading extension \"{extension}\".",exc_info=err)        
 
     def _clear_gateway_data(self):
         one_week_ago = datetime.datetime.utcnow() - datetime.timedelta(days=7)

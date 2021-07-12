@@ -1,8 +1,9 @@
 from discord import User, Guild
+import discord
 import mod_config
 from time import strftime
 
-def assemble_message(key: str, case_id:int, notes_added:int=None, notes_removed:int=None, strikes_added:int=None, strikes_removed:int=None, strikes:dict=None, reason:str=None):
+def assemble_message(key: str, case_id:int, notes_added:int=None, notes_removed:int=None, strikes_added:int=None, strikes_removed:int=None, strikes:dict=None, reason:str=None,user:User=None,mod:User=None):
     
     time_string = f"`[{strftime('%H:%M:%S')}]`"
     reason_string = f"`[ Reason ]` {reason}"
@@ -12,9 +13,9 @@ def assemble_message(key: str, case_id:int, notes_added:int=None, notes_removed:
     strike_shortcut = mod_config.message_key.get("strike_shortcut")
 
     main_string = mod_config.message_key[key.lower()].format(
-        mod=quick_user.format(username="ibx34",discrim="6030"),
-        user=quick_user.format(username="mellowmarshe",discrim="0001"),
-        user_id=id_shortcut.format(id=300088143422685185),
+        mod=quick_user.format(username=mod.name,discrim=mod.discriminator),
+        user=quick_user.format(username=user.name,discrim=user.discriminator),
+        user_id=id_shortcut.format(id=user.id),
         time="**10** minutes",
         notes_added=notes_added,
         notes_removed=notes_removed,
