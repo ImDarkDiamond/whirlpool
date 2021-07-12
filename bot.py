@@ -58,11 +58,13 @@ class TeddyBear(commands.AutoShardedBot):
         self.started_at = datetime.datetime.utcnow()
         self.message_counters = {"bots":0,"users":0,"commands":0,"self":0}
         self.owners = list()
+        self.guild_punishments = dict()
         self.initial_extensions = [
             "cogs.owner",
             "cogs.stats",
             "cogs.mod",
-            "cogs.settings"
+            "cogs.settings",
+            "cogs.strike_handler"
         ]
 
         for extension in self.initial_extensions:
@@ -249,7 +251,7 @@ class TeddyBear(commands.AutoShardedBot):
 
         with open("database.sql") as f:
             await self.pool.execute(f.read())
-
+    
         app_info = await self.application_info()
         app_team = app_info.team
 

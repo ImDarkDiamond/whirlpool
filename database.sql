@@ -6,7 +6,7 @@ BEGIN
     END IF;
 
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'modactiontype') THEN
-        CREATE TYPE ModActionType AS ENUM('mute','kick','ban','tempmute','tempban', 'strike_add', 'strike_remove', 'note_add', 'note_remove');
+        CREATE TYPE ModActionType AS ENUM('mute','kick','ban','tempmute','tempban', 'strike_add', 'pardon', 'note_add', 'note_remove');
     END IF;
 
 END$$;
@@ -31,10 +31,11 @@ CREATE TABLE IF NOT EXISTS guild_strikes (
                         PRIMARY KEY(guild_id,user_id)
 );
 
-CREATE TABLE IF NOT EXISTS strike_actions (
+CREATE TABLE IF NOT EXISTS punishments (
+    "action_id"         BIGSERIAL UNIQUE,
     "guild_id"          BIGINT NOT NULL,
     "action"            StrikeActionType NOT NULL,
-    "needed_strikes"    BIGINT NOT NULL,
+    "strikes"           BIGINT NOT NULL,
     "time"              VARCHAR
 );
 

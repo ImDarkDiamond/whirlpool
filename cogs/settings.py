@@ -21,7 +21,7 @@ class Settings(commands.Cog):
         if action.lower() not in acceptable_actions:
             return await ctx.send(f"Action must be in `{', '.join(acceptable_actions)}`")
 
-        query = """INSERT INTO strike_actions(guild_id,action,needed_strikes,time)
+        query = """INSERT INTO punishments(guild_id,action,strikes,time)
                     VALUES($1,$2,$3,$4) RETURNING *
                 """
 

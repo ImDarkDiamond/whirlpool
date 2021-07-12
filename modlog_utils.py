@@ -36,11 +36,13 @@ async def assemble_message(
     reason: str = None,
     user: User = None,
     mod: User = None,
+    case_id: int = None
 ) -> str:
 
-    case_id = await insert_mod_action(
-        ctx=ctx, action_type=key, reason=reason, target_id=user.id
-    )
+    if case_id == None:
+        case_id = await insert_mod_action(
+            ctx=ctx, action_type=key, reason=reason, target_id=user.id
+        )
 
     time_string = f"`[{strftime('%H:%M:%S')}]`"
     reason_string = f"`[ Reason ]` {reason}"
@@ -58,7 +60,7 @@ async def assemble_message(
         notes_removed=notes_removed,
         strikes_removed=strikes_removed,
         strikes_added=strikes_added,
-        strikes=strike_shortcut.format(**strikes),
+        strikes=strike_shortcut.format(**strikes) if strikes else None,
     )
 
     return f"""{time_string} `[{case_id}]` {mod_config.emoji_key[key.lower()]} {main_string}\n{reason_string}"""
