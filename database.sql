@@ -46,5 +46,5 @@ CREATE TABLE IF NOT EXISTS mod_actions (
     "target_id"         BIGINT NOT NULL,
     "action_type"       ModActionType NOT NULL,
     "created_at"        TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc'),
-    "reason"            VARCHAR(2000) NOT NULL
+    "reason"            VARCHAR(2000)
 )
