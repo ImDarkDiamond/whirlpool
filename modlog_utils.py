@@ -2,7 +2,7 @@ from discord import User, Guild
 import mod_config
 from time import strftime
 
-def assemble_message(key: str, case_id:int, reason:str=None):
+def assemble_message(key: str, case_id:int, notes_added:int=None, notes_removed:int=None, strikes_added:int=None, strikes_removed:int=None, strikes:dict=None, reason:str=None):
     
     time_string = f"`[{strftime('%H:%M:%S')}]`"
     reason_string = f"`[ Reason ]` {reason}"
@@ -16,11 +16,11 @@ def assemble_message(key: str, case_id:int, reason:str=None):
         user=quick_user.format(username="mellowmarshe",discrim="0001"),
         user_id=id_shortcut.format(id=300088143422685185),
         time="**10** minutes",
-        notes_added=str(2),
-        notes_removed=str(4),
-        strikes_removed=str(14),
-        strikes_added=str(343),
-        strikes=strike_shortcut.format(old=str(200),new=str(400))
+        notes_added=notes_added,
+        notes_removed=notes_removed,
+        strikes_removed=strikes_removed,
+        strikes_added=strikes_added,
+        strikes=strike_shortcut.format(**strikes)
     )
 
     return f"""{time_string} `[{case_id}]` {mod_config.emoji_key[key.lower()]} {main_string}\n{reason_string}"""

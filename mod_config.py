@@ -25,7 +25,7 @@ message_key = {
     "pardon": "{mod} pardoned `{strikes_removed}` strikes {strikes} from {user} {user_id}",
     "mute": "{mod} muted {user} {user_id}",
     "unmute": "{mod} unmuted {user} {user_id}",
-    "notes_added": "{mod} gave `{notes_added}` notes to {user} {user_id}",
+    "notes_added": "{mod} added `{notes_added}` notes to {user} {user_id}",
     "notes_removed": "{mod} removed `{notes_removed}` notes from {user} {user_id}",
 }
 
