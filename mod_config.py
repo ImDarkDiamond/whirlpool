@@ -7,8 +7,8 @@ emoji_key = {
     "pardon": "🏳️",
     "mute": "🔇",
     "unmute": "🔊",
-    "notes_added": "🗒️",
-    "notes_removed": "❌",
+    "note_add": "🗒️",
+    "note_add": "❌",
 }
 # Emojis used in modlogs.
 
@@ -25,8 +25,8 @@ message_key = {
     "pardon": "{mod} pardoned `{strikes_removed}` strikes {strikes} from {user} {user_id}",
     "mute": "{mod} muted {user} {user_id}",
     "unmute": "{mod} unmuted {user} {user_id}",
-    "notes_added": "{mod} added `{notes_added}` notes to {user} {user_id}",
-    "notes_removed": "{mod} removed `{notes_removed}` notes from {user} {user_id}",
+    "note_add": "{mod} added `{notes_added}` notes to {user} {user_id}",
+    "note_add": "{mod} removed `{notes_removed}` notes from {user} {user_id}",
 }
 
 # Messages used in modlogs. Not currently translated, but will most likely in the future.
