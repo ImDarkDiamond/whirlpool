@@ -1,5 +1,5 @@
 from discord.ext import commands, menus
-from utilities import cache, checks, format
+from utilities import cache, checks, formats
 import discord
 import textwrap
 import datetime
@@ -29,7 +29,7 @@ class Settings(commands.Cog):
         try:
             insert = await self.bot.pool.fetchrow(query, ctx.guild.id, action.lower(), number, time)
         except asyncpg.UniqueViolationError as err:
-            confirm = await format.prompt(ctx,f"A punishment for the action {action.lower()} already exists. Do you want to delete it?")
+            confirm = await formats.prompt(ctx,f"A punishment for the action {action.lower()} already exists. Do you want to delete it?")
             if not confirm:
                 return await ctx.send("Aborthing!")
 

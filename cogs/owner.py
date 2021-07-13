@@ -14,7 +14,7 @@ import copy
 import time
 import subprocess
 from typing import Union, Optional
-from utilities.format import TabularData, plural
+from utilities.formats import TabularData, plural
 from collections import Counter
 
 class PerformanceMocker:

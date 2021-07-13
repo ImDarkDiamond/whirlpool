@@ -128,3 +128,8 @@ async def prompt(ctx, message, *, timeout=60.0, delete_after=True, reacquire=Fal
             await msg.delete()
     finally:
         return confirm
+
+def format_dt(dt, style=None):
+    if style is None:
+        return f'<t:{int(dt.timestamp())}>'
+    return f'<t:{int(dt.timestamp())}:{style}>'

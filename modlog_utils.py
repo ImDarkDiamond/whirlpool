@@ -36,7 +36,8 @@ async def assemble_message(
     reason: str = None,
     user: User = None,
     mod: User = None,
-    case_id: int = None
+    case_id: int = None,
+    time: str = None
 ) -> str:
 
     if case_id == None:
@@ -55,7 +56,7 @@ async def assemble_message(
         mod=quick_user.format(username=mod.name, discrim=mod.discriminator),
         user=quick_user.format(username=user.name, discrim=user.discriminator),
         user_id=id_shortcut.format(id=user.id),
-        time="**10** minutes",
+        time=time,
         notes_added=notes_added,
         notes_removed=notes_removed,
         strikes_removed=strikes_removed,

@@ -52,6 +52,14 @@ CREATE TABLE IF NOT EXISTS mod_actions (
     "reason"            VARCHAR(2000)
 );
 
+CREATE TABLE IF NOT EXISTS reminders (
+    "id"                SERIAL PRIMARY KEY,
+    "expires"           TIMESTAMP,
+    "created"           TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc'),
+    "event"             VARCHAR,
+    "extra"             JSON DEFAULT '{}'::JSONB
+)
+
 -- SAVE FOR LATER
 -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
 -- CREATE TABLE IF NOT EXISTS muted_members (

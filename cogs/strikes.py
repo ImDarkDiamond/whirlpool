@@ -10,6 +10,11 @@ import traceback
 import modlog_utils
 import mod_cache
 
+def can_execute_action(ctx, user, target):
+    return user.id == ctx.bot.owner_id or \
+           user == ctx.guild.owner or \
+           user.top_role > target.top_role
+
 class ActionReason(commands.Converter):
     async def convert(self, ctx, argument):
         ret = f'{argument}'
@@ -146,7 +151,7 @@ class Strikes(commands.Cog):
                         final_string += f"Pardoned all strikes from <@{user.id}>!\n"
 
                         try:
-                            await user.send(f"ℹ️ You were pardoned of all your strikes strikes `[{initial_data['strikes']} → 0]` in **{ctx.guild.name}**\nreason: \"{reason}\" ")
+                            await user.send(f"ℹ️ You were pardoned of all your strikes `[{initial_data['strikes']} → 0]` in **{ctx.guild.name}**\nreason: \"{reason}\" ")
                         except:
                             pass
                 

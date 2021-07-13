@@ -65,7 +65,8 @@ class TeddyBear(commands.AutoShardedBot):
             "cogs.strikes",
             "cogs.settings",
             "cogs.strike_handler",
-            "cogs.mod"
+            "cogs.mod",
+            "cogs.reminders"
         ]
 
         for extension in self.initial_extensions:
