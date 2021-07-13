@@ -45,7 +45,7 @@ class StrikeHandler(commands.Cog):
             for puni in range(len(punishments)):
                 if strikes >= punishments[puni]['strikes']:
                     if strikes >= punishments[puni-1]['strikes']:
-                        if punishments[puni-1]['action'] == punishments[puni]['action']:
+                        if punishments[puni-1]['action'] == punishments[puni]['action'] and len(punishments) > 1:
                             break
                         
                         await StrikeHandler2.actions(punishments[puni-1]['action'].lower(), old_strikes=kwargs.get('old_strikes'), strikes=strikes)
@@ -56,6 +56,8 @@ class StrikeHandler(commands.Cog):
                         
                     if punishments[puni]['action'].lower() == 'kick':
                         await StrikeHandler2.actions('kick', old_strikes=kwargs.get('old_strikes'), strikes=strikes)
-                        
+    
+                    if punishments[puni]['action'].lower() == 'ban':
+                        await StrikeHandler2.actions('ban', old_strikes=kwargs.get('old_strikes'), strikes=strikes)
 def setup(bot):
     bot.add_cog(StrikeHandler(bot))

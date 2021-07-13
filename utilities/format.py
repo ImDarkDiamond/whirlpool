@@ -1,3 +1,4 @@
+import asyncio
 class plural:
     def __init__(self, value):
         self.value = value
@@ -79,3 +80,51 @@ def format_dt(dt, style=None):
     if style is None:
         return f'<t:{int(dt.timestamp())}>'
     return f'<t:{int(dt.timestamp())}:{style}>'
+
+async def prompt(ctx, message, *, timeout=60.0, delete_after=True, reacquire=False, author_id=None):
+    if not ctx.channel.permissions_for(ctx.me).add_reactions:
+        raise RuntimeError('Bot does not have Add Reactions permission.')
+
+    fmt = f'{message}'
+
+    author_id = author_id or ctx.author.id
+    msg = await ctx.send(fmt)
+
+    confirm = None
+
+    def check(payload):
+        nonlocal confirm
+
+        if payload.message_id != msg.id or payload.user_id != author_id:
+            return False
+
+        codepoint = str(payload.emoji)
+
+        if codepoint == '\N{WHITE HEAVY CHECK MARK}':
+            confirm = True
+            return True
+        elif codepoint == '\N{CROSS MARK}':
+            confirm = False
+            return True
+
+        return False
+
+    for emoji in ('\N{WHITE HEAVY CHECK MARK}', '\N{CROSS MARK}'):
+        await msg.add_reaction(emoji)
+
+    if reacquire:
+        await ctx.release()
+
+    try:
+        await ctx.bot.wait_for('raw_reaction_add', check=check, timeout=timeout)
+    except asyncio.TimeoutError:
+        confirm = None
+
+    try:
+        if reacquire:
+            await ctx.acquire()
+
+        if delete_after:
+            await msg.delete()
+    finally:
+        return confirm

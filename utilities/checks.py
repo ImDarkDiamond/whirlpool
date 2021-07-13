@@ -63,3 +63,12 @@ def mod_role_or_perms(**perms):
 
         return await check_guild_permissions(ctx, perms, check=any)
     return commands.check(predicate)
+
+def has_mute_role():
+    async def predicate(ctx):
+        config = await mod_cache.get_guild_config(ctx.bot,ctx.guild.id)
+
+        if config.mute_role:
+            return True
+        return False
+    return commands.check(predicate)

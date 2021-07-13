@@ -67,3 +67,17 @@ class Strikes(object):
     
 
         await self.send_modlog("kick", reason=reason)
+
+    async def ban(self, *args, **kwargs):
+
+        strikes = kwargs.get('strikes')
+        reason = f"[{kwargs.get('old_strikes')} → {strikes} strikes] Automatic ban for reaching `{strikes}` strikes."
+
+        await self.ctx.guild.ban(
+            self.user,
+            reason=reason,
+            delete_message_days=7
+        )
+    
+
+        await self.send_modlog("ban", reason=reason)

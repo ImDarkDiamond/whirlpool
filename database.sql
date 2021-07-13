@@ -6,7 +6,7 @@ BEGIN
     END IF;
 
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'modactiontype') THEN
-        CREATE TYPE ModActionType AS ENUM('mute','kick','ban','tempmute','tempban', 'strike_add', 'pardon', 'note_add', 'note_remove');
+        CREATE TYPE ModActionType AS ENUM('mute','kick','ban','tempmute','tempban', 'strike_add', 'pardon', 'note_add', 'note_remove','unmute', 'unban');
     END IF;
 
 END$$;
@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS guild_settings (
     "modlogs"           BIGINT,
     "messagelogs"       BIGINT,
     "serverlogs"        BIGINT,
+    "mutedmembers"      BIGINT[] DEFAULT '{}',
     
     "max_newlines"      BIGINT DEFAULT 0
 );
@@ -36,7 +37,9 @@ CREATE TABLE IF NOT EXISTS punishments (
     "guild_id"          BIGINT NOT NULL,
     "action"            StrikeActionType NOT NULL,
     "strikes"           BIGINT NOT NULL,
-    "time"              VARCHAR
+    "time"              VARCHAR,
+
+                        PRIMARY KEY(guild_id,strikes,action)
 );
 
 CREATE TABLE IF NOT EXISTS mod_actions (
@@ -47,4 +50,14 @@ CREATE TABLE IF NOT EXISTS mod_actions (
     "action_type"       ModActionType NOT NULL,
     "created_at"        TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc'),
     "reason"            VARCHAR(2000)
-)
+);
+
+-- SAVE FOR LATER
+-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
+-- CREATE TABLE IF NOT EXISTS muted_members (
+--     "guild_id"          BIGINT NOT NULL,
+--     "member_id"         BIGINT NOT NULL,
+
+--                         PRIMARY KEY(guild_id,member_id)
+-- )
+-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 

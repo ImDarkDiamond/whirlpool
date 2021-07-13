@@ -62,9 +62,10 @@ class TeddyBear(commands.AutoShardedBot):
         self.initial_extensions = [
             "cogs.owner",
             "cogs.stats",
-            "cogs.mod",
+            "cogs.strikes",
             "cogs.settings",
-            "cogs.strike_handler"
+            "cogs.strike_handler",
+            "cogs.mod"
         ]
 
         for extension in self.initial_extensions:
