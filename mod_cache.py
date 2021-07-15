@@ -14,8 +14,8 @@ class ModConfig:
         self.modrole = record['modrole']
         self.muterole = record['muterole']
         self.modlogs = record['modlogs']
-        self.messagelogs = record['messagelogs'],
-        self.serverlogs = record['serverlogs'],
+        self.messagelogs = record['messagelogs']
+        self.serverlogs = record['serverlogs']
         self.max_newlines = record['max_newlines']
         self.mutedmembers = set(record['mutedmembers'] or [])
 
@@ -30,6 +30,16 @@ class ModConfig:
     def mod_logs(self):
         guild = self.bot.get_guild(self.id)
         return guild and self.modlogs and guild.get_channel(self.modlogs)
+
+    @property
+    def server_logs(self):
+        guild = self.bot.get_guild(self.id)
+        return guild and self.serverlogs and guild.get_channel(self.serverlogs)
+
+    @property
+    def message_logs(self):
+        guild = self.bot.get_guild(self.id)
+        return guild and self.messagelogs and guild.get_channel(self.messagelogs)
 
     # def is_muted(self, member):
     #     return member.id in self.muted_members

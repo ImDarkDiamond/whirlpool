@@ -187,7 +187,7 @@ def human_timedelta(dt, *, source=None, accuracy=3, brief=False, suffix=True):
         if not elem:
             continue
 
-        if attr == '**day**':
+        if attr == 'day':
             weeks = delta.weeks
             if weeks:
                 elem -= weeks * 7
@@ -202,7 +202,7 @@ def human_timedelta(dt, *, source=None, accuracy=3, brief=False, suffix=True):
         if brief:
             output.append(f'**{elem}**{brief_attr}')
         else:
-            output.append(f'**{plural(elem)}**{attr}')
+            output.append(format(plural(elem, bold_singular=True), attr))
 
     if accuracy is not None:
         output = output[:accuracy]

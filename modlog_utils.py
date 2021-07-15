@@ -65,3 +65,13 @@ async def assemble_message(
     )
 
     return f"""{time_string} `[{case_id}]` {mod_config.emoji_key[key.lower()]} {main_string}\n{reason_string}"""
+
+def assemble_reg_message(
+    key: str,
+    **kwargs,
+) -> str:
+
+    time_string = f"`[{strftime('%H:%M:%S')}]`"
+
+    main_string = mod_config.message_key[key.lower()].format(**kwargs)
+    return f"""{time_string} {mod_config.emoji_key[key.lower()]} {main_string}"""

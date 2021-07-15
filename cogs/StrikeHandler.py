@@ -1,7 +1,7 @@
 from operator import mod
 import typing
 from discord.ext import commands, menus
-from utilities import cache, checks, strike_switcher
+from utilities import cache, checks, StrikeSwitcher
 import discord
 import textwrap
 import datetime
@@ -16,7 +16,7 @@ class StrikeHandler(commands.Cog):
 
     @commands.Cog.listener()
     async def on_strike_add(self, ctx, user: typing.Union[discord.Member,discord.User], strikes, **kwargs):
-        StrikeHandler2 = strike_switcher.Strikes(ctx, user)
+        StrikeHandler2 = StrikeSwitcher.Strikes(ctx, user)
         await StrikeHandler2.fill_cache()
 
         config = await mod_cache.get_guild_config(self.bot,ctx.guild.id)
@@ -33,7 +33,7 @@ class StrikeHandler(commands.Cog):
             )
 
             await channel.send(message)
-
+        
         async with self.bot.pool.acquire() as conn:
             punishments = """SELECT * FROM punishments WHERE guild_id = $1"""
             punishments = await conn.fetch(punishments, ctx.guild.id)

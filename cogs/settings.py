@@ -5,11 +5,21 @@ import textwrap
 import datetime
 import traceback
 import asyncpg
-
+import typing
+import mod_config
+import mod_cache
 
 class Settings(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+
+    async def settings_handler(self, ctx, key:str, value):
+
+        value = None if value is None else value
+        sql = f"""INSERT INTO guild_settings(id,{key}) VALUES($1,$2)
+                ON CONFLICT (id) DO UPDATE SET {key} = $2"""
+
+        return await ctx.bot.pool.execute(sql, ctx.guild.id, value)
 
     @commands.command()
     @commands.guild_only()
@@ -48,5 +58,56 @@ class Settings(commands.Cog):
 
         await ctx.send(f"Added a new punishment!",embed=embed)
 
+    @commands.command()
+    @commands.guild_only()
+    @checks.has_guild_permissions(manage_guild=True)
+    async def modlogs(self, ctx, *, channel: typing.Union[discord.TextChannel,str]) -> None:
+
+        if type(channel) != discord.TextChannel and type(channel) == str:
+            if channel.lower() != 'off':
+                return await ctx.send("You must provide either a channel, or 'OFF'")
+
+        channel = None if type(channel) != discord.TextChannel and channel.lower() == 'off' else channel
+        await self.settings_handler(ctx, "modlogs", channel.id if type(channel) == discord.TextChannel else channel)
+        mod_cache.get_guild_config.invalidate(ctx.bot, ctx.guild.id)
+
+        await ctx.send(f"{mod_config.custom_emojis['check']} Successfully set your modlogs to {'off' if channel is None else channel}")
+
+    @commands.command()
+    @commands.guild_only()
+    @checks.has_guild_permissions(manage_guild=True)
+    async def serverlogs(self, ctx, *, channel: typing.Union[discord.TextChannel,str]) -> None:
+
+        if type(channel) != discord.TextChannel and type(channel) == str:
+            if channel.lower() != 'off':
+                return await ctx.send("You must provide either a channel, or 'OFF'")
+
+        channel = None if type(channel) != discord.TextChannel and channel.lower() == 'off' else channel
+        await self.settings_handler(ctx, "serverlogs", channel.id if type(channel) == discord.TextChannel else channel)
+        mod_cache.get_guild_config.invalidate(ctx.bot, ctx.guild.id)
+
+        await ctx.send(f"{mod_config.custom_emojis['check']} Successfully set your serverlogs to {'off' if channel is None else channel}")
+
+    @commands.command()
+    @commands.guild_only()
+    @checks.has_guild_permissions(manage_guild=True)
+    async def messagelogs(self, ctx, *, channel: typing.Union[discord.TextChannel,str]) -> None:
+
+        if type(channel) != discord.TextChannel and type(channel) == str:
+            if channel.lower() != 'off':
+                return await ctx.send("You must provide either a channel, or 'OFF'")
+
+        channel = None if type(channel) != discord.TextChannel and channel.lower() == 'off' else channel
+        await self.settings_handler(ctx, "messagelogs", channel.id if type(channel) == discord.TextChannel else channel)
+        mod_cache.get_guild_config.invalidate(ctx.bot, ctx.guild.id)
+
+        await ctx.send(f"{mod_config.custom_emojis['check']} Successfully set your messagelogs to {'off' if channel is None else channel}")
+
+    @commands.command()
+    @commands.guild_only()
+    @checks.has_guild_permissions(manage_guild=True)
+    async def mutedrole(self, ctx) -> None:
+        ...
+        
 def setup(bot):
     bot.add_cog(Settings(bot))

@@ -2,13 +2,14 @@ from logging import exception
 from operator import mod
 from discord.ext import commands, menus
 from discord.ext.commands.core import command
-from utilities import cache, checks
+from utilities import cache, checks, time
 import discord
 import textwrap
 import datetime
 import traceback
 import modlog_utils
 import mod_cache
+import mod_config
 
 def can_execute_action(ctx, user, target):
     return user.id == ctx.bot.owner_id or \
@@ -70,7 +71,7 @@ class Strikes(commands.Cog):
                 update = await self.bot.pool.fetchrow(query, ctx.guild.id, user.id, strikes)
 
                 try:
-                    await user.send(f"ℹ️ You were given `{strikes}` strikes `[{update['strikes']-strikes} → {update['strikes']}]` in **{ctx.guild.name}**\nreason: \"{reason}\" ")
+                    await user.send(f"{mod_config.custom_emojis['infow']} You were given `{strikes}` strikes `[{update['strikes']-strikes} → {update['strikes']}]` in **{ctx.guild.name}**\nreason: \"{reason}\" ")
                 except:
                     pass
 
@@ -102,7 +103,7 @@ class Strikes(commands.Cog):
                 final_string += f"Failed to give strikes to <@{user.id}>!\n"
                 continue
 
-            final_string += f"Gave `{strikes}` strikes to <@{user.id}> `[{update['strikes']-strikes} → {update['strikes']}]`!\n"
+            final_string += f"{mod_config.custom_emojis['plus']} Gave `{strikes}` strikes to <@{user.id}> `[{update['strikes']-strikes} → {update['strikes']}]`!\n"
 
         await ctx.send(final_string,allowed_mentions=discord.AllowedMentions(users=False,everyone=False,roles=False))
 
@@ -143,15 +144,15 @@ class Strikes(commands.Cog):
                     initial_data = await conn.fetchrow(query,ctx.guild.id,user.id)
 
                     if not initial_data:
-                        final_string += f"<@{user.id}> Doesn't have any strikes!\n"
+                        final_string += f"{mod_config.custom_emojis['change']} <@{user.id}> Doesn't have any strikes!\n"
                         continue
                     
                     if initial_data['strikes'] - strikes <= 0:
                         await conn.execute("DELETE FROM guild_strikes WHERE guild_id = $1 AND user_id = $2",ctx.guild.id,user.id)
-                        final_string += f"Pardoned all strikes from <@{user.id}>!\n"
+                        final_string += f"{mod_config.custom_emojis['minus']} Pardoned all strikes from <@{user.id}>!\n"
 
                         try:
-                            await user.send(f"ℹ️ You were pardoned of all your strikes `[{initial_data['strikes']} → 0]` in **{ctx.guild.name}**\nreason: \"{reason}\" ")
+                            await user.send(f"{mod_config.custom_emojis['infow']} You were pardoned of all your strikes `[{initial_data['strikes']} → 0]` in **{ctx.guild.name}**\nreason: \"{reason}\" ")
                         except:
                             pass
                 
@@ -163,7 +164,7 @@ class Strikes(commands.Cog):
                         update = await conn.fetchrow(query, initial_data['strikes'] - strikes,ctx.guild.id, user.id)
 
                     try:
-                        await user.send(f"ℹ️ You pardoned of `{strikes}` strikes `[{initial_data['strikes']} → {update['strikes']}]` in **{ctx.guild.name}**\nreason: \"{reason}\" ")
+                        await user.send(f"{mod_config.custom_emojis['infow']} You pardoned of `{strikes}` strikes `[{initial_data['strikes']} → {update['strikes']}]` in **{ctx.guild.name}**\nreason: \"{reason}\" ")
                     except:
                         pass
 
@@ -175,7 +176,7 @@ class Strikes(commands.Cog):
                 final_string += f"Failed to pardon strike from <@{user.id}>!\n"
                 continue
 
-            final_string += f"Pardoned `{strikes}` strikes from <@{user.id}> `[{initial_data['strikes']} → {update['strikes']}]`!\n"
+            final_string += f"{mod_config.custom_emojis['minus']} Pardoned `{strikes}` strikes from <@{user.id}> `[{initial_data['strikes']} → {update['strikes']}]`!\n"
 
         await ctx.send(final_string,allowed_mentions=discord.AllowedMentions(users=False,everyone=False,roles=False))
 
@@ -190,15 +191,23 @@ class Strikes(commands.Cog):
             config = await mod_cache.get_guild_config(ctx.bot,ctx.guild.id)
             strikes = await self.bot.pool.fetchval("SELECT strikes FROM guild_strikes WHERE guild_id = $1 AND user_id = $2",
                                                     ctx.guild.id, user.id)
+            x_status_query = """SELECT expires FROM reminders WHERE 
+                                extra #>> '{args,2}' = $1 AND extra #>> '{args,0}' = $2 
+                                AND event = $3"""
+
+            mute_status = await self.bot.pool.fetchval(x_status_query,str(user.id),str(ctx.guild.id),"tempmute")
+            ban_status = await self.bot.pool.fetchval(x_status_query,str(user.id),str(ctx.guild.id),"tempban") 
 
             is_muted = user.id in config.mutedmembers
             is_banned =  discord.utils.find(lambda u: str(u.user) == user, ban_list)
 
-            string = f"Moderation information for **{user.name}**#{user.discriminator} (ID:`{user.id}`)\n"
+            string = f"{mod_config.custom_emojis['check']} Moderation information for **{user.name}**#{user.discriminator} (ID:`{user.id}`)\n"
             string += f"🚩 Strikes: **{strikes or 0}**\n"
             string += f"🔇 Muted: {'**Yes**' if is_muted else '**No**'}\n"
+            string += f"🤐 Mute Time Remaining: {f'{time.human_timedelta(mute_status)}' if mute_status else 'N/A'}\n"
             string += f"🔨 Banned: {'**Yes**' if is_banned else '**No**'}\n"
-
+            string += f"⏲️ Ban Time Remaining: {f'{time.human_timedelta(ban_status)}' if ban_status else 'N/A'}\n"
+            
             await ctx.send(string)
         except Exception as err:
             return await ctx.send(f"An error occured!```{err}```")

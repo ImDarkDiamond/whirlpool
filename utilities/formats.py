@@ -1,14 +1,16 @@
 import asyncio
 class plural:
-    def __init__(self, value):
+    def __init__(self, value, bold_singular=True):
         self.value = value
+        self.bold_singular = bold_singular
+
     def __format__(self, format_spec):
         v = self.value
         singular, sep, plural = format_spec.partition('|')
         plural = plural or f'{singular}s'
         if abs(v) != 1:
-            return f'{v} {plural}'
-        return f'{v} {singular}'
+            return f'{f"**{v}**" if self.bold_singular else v} {plural}'
+        return f'{f"**{v}**" if self.bold_singular else v} {singular}'
 
 def human_join(seq, delim=', ', final='or'):
     size = len(seq)

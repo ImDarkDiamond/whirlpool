@@ -54,11 +54,11 @@ CREATE TABLE IF NOT EXISTS mod_actions (
 
 CREATE TABLE IF NOT EXISTS reminders (
     "id"                SERIAL PRIMARY KEY,
-    "expires"           TIMESTAMP,
-    "created"           TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc'),
+    "expires"           TIMESTAMP WITH TIME ZONE,
+    "created"           TIMESTAMP WITH TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc'),
     "event"             VARCHAR,
     "extra"             JSON DEFAULT '{}'::JSONB
-)
+);
 
 -- SAVE FOR LATER
 -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 

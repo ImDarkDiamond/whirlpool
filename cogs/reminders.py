@@ -5,6 +5,8 @@ import asyncio
 import asyncpg
 import datetime
 import textwrap
+import json
+import pytz
 
 class Timer:
     __slots__ = ('args', 'kwargs', 'event', 'id', 'created_at', 'expires')
@@ -12,7 +14,9 @@ class Timer:
     def __init__(self, *, record):
         self.id = record['id']
 
+
         extra = record['extra']
+
         self.args = extra.get('args', [])
         self.kwargs = extra.get('kwargs', {})
         self.event = record['event']
@@ -66,21 +70,32 @@ class Reminder(commands.Cog):
 
     async def get_active_timer(self, *, connection=None, days=7):
         query = "SELECT * FROM reminders WHERE expires < (CURRENT_DATE + $1::interval) ORDER BY expires LIMIT 1;"
-        con = connection or self.bot.pool
+        conn = connection
 
-        record = await con.fetchrow(query, datetime.timedelta(days=days))
+        await conn.set_type_codec( 
+            'json',
+            encoder=json.dumps,
+            decoder=json.loads,
+            schema='pg_catalog',
+            format='binary'
+        )
+
+        record = await conn.fetchrow(query, datetime.timedelta(days=days))
         return Timer(record=record) if record else None
 
     async def wait_for_active_timers(self, *, connection=None, days=7):
-        async with self.bot.pool.Acquire() as con:
+        async with self.bot.pool.acquire() as con:
             timer = await self.get_active_timer(connection=con, days=days)
+
             if timer is not None:
                 self._have_data.set()
                 return timer
 
+            
             self._have_data.clear()
             self._current_timer = None
             await self._have_data.wait()
+
             return await self.get_active_timer(connection=con, days=days)
 
     async def call_timer(self, timer):
@@ -92,20 +107,23 @@ class Reminder(commands.Cog):
         event_name = f'{timer.event}_timer_complete'
         self.bot.dispatch(event_name, timer)
 
+        self._task.cancel()
+        self._task = self.bot.loop.create_task(self.dispatch_timers())
+
     async def dispatch_timers(self):
         try:
             while not self.bot.is_closed():
-                # can only asyncio.sleep for up to ~48 days reliably
-                # so we're gonna cap it off at 40 days
-                # see: http://bugs.python.org/issue20493
                 timer = self._current_timer = await self.wait_for_active_timers(days=40)
-                now = datetime.datetime.utcnow()
+                now = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+                timer.expires.replace(tzinfo=pytz.utc)
 
                 if timer.expires >= now:
                     to_sleep = (timer.expires - now).total_seconds()
                     await asyncio.sleep(to_sleep)
 
                 await self.call_timer(timer)
+        except Exception as err:
+            raise
         except asyncio.CancelledError:
             raise
         except (OSError, discord.ConnectionClosed, asyncpg.PostgresConnectionError):
@@ -149,25 +167,42 @@ class Reminder(commands.Cog):
         when, event, *args = args
         connection = self.bot.pool
 
+
         try:
             now = kwargs.pop('created')
         except KeyError:
-            now = datetime.datetime.utcnow()
+            now = datetime.datetime.now()
 
         timer = Timer.temporary(event=event, args=args, kwargs=kwargs, expires=when, created=now)
         delta = (when - now).total_seconds()
+
         if delta <= 60:
             # a shortcut for small timers
             self.bot.loop.create_task(self.short_timer_optimisation(delta, timer))
             return timer
 
-        query = """INSERT INTO reminders (event, extra, expires, created)
-                   VALUES ($1, $2::jsonb, $3, $4)
-                   RETURNING id;
-                """
+        def _encoder(value):
+            return b'\x01' + json.dumps(value).encode('utf-8')
 
-        row = await connection.fetchrow(query, event, { 'args': args, 'kwargs': kwargs }, when, now)
-        timer.id = row[0]
+        def _decoder(value):
+            return json.loads(value[1:].decode('utf-8'))
+        
+        async with connection.acquire() as conn:
+            await conn.set_type_codec( 
+                'jsonb',
+                encoder=_encoder,
+                decoder=_decoder,
+                schema='pg_catalog',
+                format='binary'
+            )
+        
+            query = """INSERT INTO reminders (event, extra, expires, created)
+                    VALUES ($1, $2::jsonb, $3, $4)
+                    RETURNING id;
+                    """
+
+            row = await conn.fetchrow(query, event, { 'args': args, 'kwargs': kwargs }, when, now)
+            timer.id = row[0]
 
         # only set the data check if it can be waited on
         if delta <= (86400 * 40): # 40 days

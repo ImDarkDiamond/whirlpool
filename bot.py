@@ -52,6 +52,7 @@ class TeddyBear(commands.AutoShardedBot):
         self.db = self.pool
         self.prefixes = Config("prefixes.json")
         self.blacklist = Config('blacklist.json')
+        self.mutual_servers = dict()
         self._prev_events = deque(maxlen=10)
         self.spam_control = commands.CooldownMapping.from_cooldown(10, 12.0, commands.BucketType.user)
         self._auto_spam_count = Counter()
@@ -64,16 +65,38 @@ class TeddyBear(commands.AutoShardedBot):
             "cogs.stats",
             "cogs.strikes",
             "cogs.settings",
-            "cogs.strike_handler",
+            "cogs.StrikeHandler",
             "cogs.mod",
-            "cogs.reminders"
-        ]
+            "cogs.reminders",
+            "logging_.BasicLogging",
+        ]     
 
-        for extension in self.initial_extensions:
-            try:
-                self.load_extension(extension)
-            except Exception as err:
-                log.error(f"Error while loading extension \"{extension}\".",exc_info=err)        
+    async def get_mutual_guilds(self, user_id: int, update_bypass: bool=False):
+
+        try:
+            if self.mutual_servers.get(user_id) and not update_bypass:
+                return self.mutual_servers.get(user_id)
+
+            for guild in self.guilds:
+                if user_id in [member.id for member in guild.members]:
+                    if self.mutual_servers.get(user_id):
+                        self.mutual_servers[user_id].append(guild.id)
+                        continue
+
+                    self.mutual_servers[user_id] = [guild.id]
+            
+            return self.mutual_servers.get(user_id)
+        except Exception as err:
+            print(err)
+
+    async def send_message(self, channel_id: int, *args, **kwargs):
+        """Convenience for sending messages w/ self.bot.http.send_message"""
+
+        await self.http.send_message(
+            channel_id,
+            *args,
+            **kwargs
+        )
 
     def _clear_gateway_data(self):
         one_week_ago = datetime.datetime.utcnow() - datetime.timedelta(days=7)
@@ -245,11 +268,17 @@ class TeddyBear(commands.AutoShardedBot):
     async def on_ready(self):
         if not hasattr(self, 'uptime'):
             self.uptime = datetime.datetime.utcnow()
-        
+
         self.pool = await asyncpg.create_pool(
             config.postgresql,
             max_size=150
         )
+
+        for extension in self.initial_extensions:
+            try:
+                self.load_extension(extension)
+            except Exception as err:
+                log.error(f"Error while loading extension \"{extension}\".",exc_info=err)   
 
         with open("database.sql") as f:
             await self.pool.execute(f.read())
