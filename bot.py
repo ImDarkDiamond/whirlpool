@@ -8,7 +8,6 @@ import traceback
 import aiohttp
 import sys
 from collections import Counter, deque, defaultdict
-
 import config
 import asyncpg
 
@@ -47,6 +46,7 @@ class TeddyBear(commands.AutoShardedBot):
         self.client_id = config.client_id
         self.session = aiohttp.ClientSession(loop=self.loop)
         self.resumes = defaultdict(list)
+        self.special_user_cache = dict()
         self.identifies = defaultdict(list)
         self.pool = None
         self.db = self.pool
@@ -69,6 +69,8 @@ class TeddyBear(commands.AutoShardedBot):
             "cogs.mod",
             "cogs.reminders",
             "logging_.BasicLogging",
+            "logging_.VoiceLogging",
+            "logging_.ModLogs"
         ]     
 
     async def get_mutual_guilds(self, user_id: int, update_bypass: bool=False):
@@ -80,6 +82,9 @@ class TeddyBear(commands.AutoShardedBot):
             for guild in self.guilds:
                 if user_id in [member.id for member in guild.members]:
                     if self.mutual_servers.get(user_id):
+                        if guild.id in self.mutual_servers[user_id]:
+                            continue
+
                         self.mutual_servers[user_id].append(guild.id)
                         continue
 
@@ -88,6 +93,40 @@ class TeddyBear(commands.AutoShardedBot):
             return self.mutual_servers.get(user_id)
         except Exception as err:
             print(err)
+
+    async def generate_gist(self, before: str, after: str=None) -> dict:
+
+        if not config.gist_token:
+            return
+
+        payload = {
+            "public": "false",
+            "files": {
+                "Before Content": { "content": before },
+            }
+        }
+
+        if after:
+            payload['files']['After Content'] =  {
+                "content": after
+            }
+
+        request = await self.session.post(
+            "https://api.github.com/gists",
+            params={"scope": "gist"},
+            data=json.dumps(payload),
+            headers={
+                "Accept": "application/vnd.github.v3+json",
+                "Authorization": "token %s" % config.gist_token
+            }
+        )
+
+        data = await request.json()
+
+        return {
+            "id": data['id'],
+            "url": "https://gist.github.com/ibx34/%s" % data['id']
+        }
 
     async def send_message(self, channel_id: int, *args, **kwargs):
         """Convenience for sending messages w/ self.bot.http.send_message"""

@@ -1,5 +1,5 @@
 from discord.ext import commands, menus
-from utilities import cache, checks, formats
+from utilities import cache, checks, formats, userfriendlly
 import discord
 import textwrap
 import datetime
@@ -24,7 +24,7 @@ class Settings(commands.Cog):
     @commands.command()
     @commands.guild_only()
     @checks.has_guild_permissions(manage_guild=True)
-    async def punishment(self, ctx, number: int, action: str, time=None) -> None:
+    async def punishment(self, ctx, number: int, action: str, *, time: str=None) -> None:
         acceptable_actions = ['mute','kick','ban','tempban','tempmute']
 
         if number < 1:
@@ -32,6 +32,12 @@ class Settings(commands.Cog):
 
         if action.lower() not in acceptable_actions:
             return await ctx.send(f"Action must be in `{', '.join(acceptable_actions)}`")
+
+        if time:
+            try:
+                userfriendlly.FutureTime(time)
+            except commands.BadArgument:
+                return await ctx.send("Invalid time provided.")
 
         query = """INSERT INTO punishments(guild_id,action,strikes,time)
                     VALUES($1,$2,$3,$4) RETURNING *
@@ -56,7 +62,7 @@ class Settings(commands.Cog):
         if time:
             embed.add_field(name="Duration", value=f"`{time}`",inline=False)
 
-        await ctx.send(f"Added a new punishment!",embed=embed)
+        await ctx.send(f"{mod_config.custom_emojis['check']} Successfully added a new punishment!")
 
     @commands.command()
     @commands.guild_only()
@@ -87,6 +93,21 @@ class Settings(commands.Cog):
         mod_cache.get_guild_config.invalidate(ctx.bot, ctx.guild.id)
 
         await ctx.send(f"{mod_config.custom_emojis['check']} Successfully set your serverlogs to {'off' if channel is None else channel}")
+
+    @commands.command()
+    @commands.guild_only()
+    @checks.has_guild_permissions(manage_guild=True)
+    async def voicelogs(self, ctx, *, channel: typing.Union[discord.TextChannel,str]) -> None:
+
+        if type(channel) != discord.TextChannel and type(channel) == str:
+            if channel.lower() != 'off':
+                return await ctx.send("You must provide either a channel, or 'OFF'")
+
+        channel = None if type(channel) != discord.TextChannel and channel.lower() == 'off' else channel
+        await self.settings_handler(ctx, "voicelogs", channel.id if type(channel) == discord.TextChannel else channel)
+        mod_cache.get_guild_config.invalidate(ctx.bot, ctx.guild.id)
+
+        await ctx.send(f"{mod_config.custom_emojis['check']} Successfully set your voicelogs to {'off' if channel is None else channel}")
 
     @commands.command()
     @commands.guild_only()

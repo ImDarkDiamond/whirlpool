@@ -8,3 +8,4 @@ parsedatetime
 python-dateutil
 lru_dict
 pytz
+requests

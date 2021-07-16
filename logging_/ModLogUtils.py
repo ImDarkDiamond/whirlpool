@@ -1,12 +1,12 @@
 from discord import User, Guild
 import discord
 import mod_config
+import typing
 from time import strftime
 from bot import TeddyBear
 
-
-async def insert_mod_action(bot, **kwargs) -> int:
-
+async def insert(bot, **kwargs) -> int:
+        
     async with bot.pool.acquire() as conn:
 
         query = """INSERT INTO mod_actions(guild_id,mod_id,target_id,action_type,reason) 
@@ -24,31 +24,29 @@ async def insert_mod_action(bot, **kwargs) -> int:
 
     return insert["case_id"]
 
-
 async def assemble_message(
     key: str,
-    ctx=None,
-    notes_added: int = None,
-    notes_removed: int = None,
-    strikes_added: int = None,
-    strikes_removed: int = None,
-    strikes: dict = None,
-    reason: str = None,
-    user: User = None,
-    mod: User = None,
-    case_id: int = None,
-    time: str = None,
-    bot=None,
-    guild=None
+    guild: discord.Guild,
+    user: typing.Union[discord.User,discord.Member],
+    mod: typing.Union[discord.User,discord.Member],
+    bot,
+    **kwargs
 ) -> str:
 
+    case_id = kwargs.get("case_id")
+    reason = kwargs.get("reason") or "[no reason provided]"
+    time = kwargs.get("time")
+    notes_added = kwargs.get("notes_added")
+    notes_removed = kwargs.get("notes_removed")
+    strikes_added = kwargs.get("strikes_added")
+    strikes_removed = kwargs.get("strikes_removed")
+    strikes = kwargs.get("strikes")
+
     if case_id == None:
-        case_id = await insert_mod_action(
-            action_type=key, reason=reason, target_id=user.id, bot=ctx.bot or bot, guild=guild, mod=mod
-        )
+        case_id = await insert(action_type=key, reason=reason, target_id=user.id, bot=bot, guild=guild, mod=mod)
 
     time_string = f"`[{strftime('%H:%M:%S')}]`"
-    reason_string = f"`[ Reason ]` {reason}"
+    reason_string = f"`[ Reason ]` {reason}"        
 
     quick_user = mod_config.message_key.get("quick_user")
     id_shortcut = mod_config.message_key.get("id_shortcut")
@@ -58,22 +56,12 @@ async def assemble_message(
         mod=quick_user.format(username=mod.name, discrim=mod.discriminator),
         user=quick_user.format(username=user.name, discrim=user.discriminator),
         user_id=id_shortcut.format(id=user.id),
-        time=time,
+        time=time,        
         notes_added=notes_added,
         notes_removed=notes_removed,
         strikes_removed=strikes_removed,
         strikes_added=strikes_added,
-        strikes=strike_shortcut.format(**strikes) if strikes else None,
+        strikes=strike_shortcut.format(**strikes) if strikes else None,    
     )
 
     return f"""{time_string} `[{case_id}]` {mod_config.emoji_key[key.lower()]} {main_string}\n{reason_string}"""
-
-def assemble_reg_message(
-    key: str,
-    **kwargs,
-) -> str:
-
-    time_string = f"`[{strftime('%H:%M:%S')}]`"
-
-    main_string = mod_config.message_key[key.lower()].format(**kwargs)
-    return f"""{time_string} {mod_config.emoji_key[key.lower()]} {main_string}"""

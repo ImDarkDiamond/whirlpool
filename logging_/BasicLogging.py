@@ -64,6 +64,12 @@ class BasicLogging(commands.Cog):
             # Enable bypass so we always get new servers. We may have been added to 
             # a server where the user is also! 
 
+            # Maybe getting the avatars before the loop is smart...
+            # Just shortcut for avatars if it has changed.
+            if before.avatar != after.avatar:
+                before_img = await before.avatar.read() or await before.default_avatar.read()
+                after_img = await after.avatar.read() or await before.default_avatar.read()
+
             for server in guilds:
                 config = await mod_cache.get_guild_config(self.bot,server)
                 log_channel = config and config.server_logs
@@ -95,9 +101,6 @@ class BasicLogging(commands.Cog):
                             user=quick_user.format(username=before.name,discrim=before.discriminator),
                             user_id=id_shortcut.format(id=before.id)
                         )
-
-                        before_img = await before.avatar.read()
-                        after_img = await after.avatar.read()
 
                         image = await self.assemble_image(before_img,after_img,id=before.id)
                         await config.server_logs.send(message,file=image)
@@ -153,6 +156,93 @@ class BasicLogging(commands.Cog):
         except Exception as err:
             print(err)
 
+    @commands.Cog.listener()
+    async def on_message_delete(self, message):
+
+        # Bots are stinky
+        if message.author.bot: return
+
+        try:
+            config = await mod_cache.get_guild_config(self.bot,message.guild.id)
+            quick_user = mod_config.message_key.get("quick_user")
+            id_shortcut = mod_config.message_key.get("id_shortcut")
+    
+            if not config:
+                return
+
+            if not config.message_logs:
+                return        
+
+            embed = discord.Embed(color=0x71a2b1)
+
+            if len(message.content) > 3999:
+                url = await self.bot.generate_gist(message.content)
+                embed.description = f"[`📄 View`]({url['url']}) | [`📩 Download`]({url['url']}/download)"
+
+            if len(message.content) < 3999:
+                embed.description = message.content
+
+            message = modlog_utils.assemble_reg_message(
+                key="message_delete",
+                user=quick_user.format(username=message.author.name,discrim=message.author.discriminator),
+                user_id=id_shortcut.format(id=message.author.id),
+                channel=message.channel.mention
+            )      
+
+            await config.message_logs.send(message, embed=embed)    
+        except Exception as err:
+            print(err)
+
+    @commands.Cog.listener()
+    async def on_message_edit(self, before, after):
+
+        # Bots are stinky
+        if before.author.bot: return
+
+        # Incase a message was pinned, etc. we dont want those.
+        if after.content == before.content: return
+
+        try:
+            config = await mod_cache.get_guild_config(self.bot,before.guild.id)
+            quick_user = mod_config.message_key.get("quick_user")
+            id_shortcut = mod_config.message_key.get("id_shortcut")
+    
+            if not config:
+                return
+
+            if not config.message_logs:
+                return        
+
+            embed = discord.Embed(color=0x71a2b1)
+
+            if len(before.content) >= 1024 and len(after.content) >= 1024:
+                url = await self.bot.generate_gist(before.content,after.content)
+                embed.description = "Seems both the before, and after cotnent are too big for embeds!\n" \
+                                    f"[`📄 View`]({url['url']}) | [`📩 Download`]({url['url']}/download)"
+
+            else:
+                if len(before.content) >= 1024:
+                    url = await self.bot.generate_gist(before.content)
+                    embed.add_field(name="Before", value=f"[`📄 View`]({url['url']}) | [`📩 Download`]({url['url']}/download)", inline=False)
+                else:
+                    embed.add_field(name="Before", value=before.content)
+
+                if len(after.content) >= 1024:
+                    url = await self.bot.generate_gist(after.content)
+                    embed.add_field(name="After", value=f"[`📄 View`]({url['url']}) | [`📩 Download`]({url['url']}/download)", inline=False)    
+                else:
+                    embed.add_field(name="After", value=after.content, inline=False)
+
+            message = modlog_utils.assemble_reg_message(
+                key="message_edit",
+                user=quick_user.format(username=before.author.name,discrim=before.author.discriminator),
+                user_id=id_shortcut.format(id=before.author.id),
+                channel=before.channel.mention
+            )          
+
+            await config.message_logs.send(message, embed=embed)
+        except Exception as err:
+            print(err)
 
 def setup(bot):
     bot.add_cog(BasicLogging(bot))

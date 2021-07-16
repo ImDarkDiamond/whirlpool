@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS guild_settings (
     "modlogs"           BIGINT,
     "messagelogs"       BIGINT,
     "serverlogs"        BIGINT,
+    "voicelogs"         BIGINT,
     "mutedmembers"      BIGINT[] DEFAULT '{}',
     
     "max_newlines"      BIGINT DEFAULT 0

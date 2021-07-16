@@ -1,7 +1,7 @@
 emoji_key = {
     "tempmute": "🤐",
     "ban": "🔨",
-    "unban": "⚙️",
+    "unban": "🔧",
     "kick": "👢",
     "strike_add": "🚩",
     "pardon": "🏳️",
@@ -48,7 +48,7 @@ message_key = {
     "voice_move": "{user} {user_id} has moved voice channels from _{origin}_ to _{new}_",
     "name_change": "{user} {user_id} has updated their name from _{origin}_ to _{new}_",
     "discrim_change": "{user} {user_id} has changed their discriminator from _{origin}_ to _{new}_",
-    "avatar_change": "{user} {user_id} has changed their avatar."
+    "avatar_change": "{user} {user_id} has changed their avatar"
 }
 
 # Messages used in modlogs. Not currently translated, but will most likely in the future.
@@ -62,6 +62,6 @@ custom_emojis = {
     "question": "<:question:864580283352612874>",
     "plus": "<:plus:864580283343831061>",
     "minus": "<:minus:864580283306475560>",
-    "check": "<:Check:864580283239235615>",
+    "check": "<:greenCheckBox:865423233956315167>", #"<:Check:864580283239235615>",
     "infob": "<:black_info:864580283218264064>"
 }

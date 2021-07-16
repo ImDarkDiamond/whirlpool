@@ -3,7 +3,7 @@ import discord
 
 class ModConfig:
     __slots__ = ('id','modrole','muterole','modlogs','messagelogs','serverlogs',
-                'max_newlines','bot', 'mutedmembers')
+                'max_newlines','bot', 'mutedmembers','voicelogs')
 
     @classmethod
     async def from_record(cls, record, bot):
@@ -17,6 +17,7 @@ class ModConfig:
         self.messagelogs = record['messagelogs']
         self.serverlogs = record['serverlogs']
         self.max_newlines = record['max_newlines']
+        self.voicelogs = record['voicelogs']
         self.mutedmembers = set(record['mutedmembers'] or [])
 
         return self
@@ -41,6 +42,11 @@ class ModConfig:
         guild = self.bot.get_guild(self.id)
         return guild and self.messagelogs and guild.get_channel(self.messagelogs)
 
+    @property
+    def voice_logs(self):
+        guild = self.bot.get_guild(self.id)
+        return guild and self.messagelogs and guild.get_channel(self.voicelogs)
+        
     # def is_muted(self, member):
     #     return member.id in self.muted_members
 

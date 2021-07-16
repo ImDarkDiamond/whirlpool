@@ -1,21 +1,24 @@
+import asyncio
+import datetime
+import textwrap
+import traceback
+import typing
+from collections import Counter, defaultdict
 from logging import exception
 from operator import mod
+
+import asyncpg
+import discord
+import mod_cache
+import mod_config
+import modlog_utils
+import pytz
 from discord.ext import commands, menus, tasks
 from discord.ext.commands.core import command
-from utilities import cache, checks, time
-import pytz
+from logging_ import ModLogUtils
 from pytz import timezone
-from collections import Counter, defaultdict
-import asyncio
-import discord
-import textwrap
-import datetime
-import traceback
-import modlog_utils
-import mod_cache
-import typing
-import asyncpg
-import mod_config
+from utilities import cache, checks, time
+
 
 class ActionReason(commands.Converter):
     async def convert(self, ctx, argument):
@@ -169,11 +172,27 @@ class Mod(commands.Cog):
                                                                                 user.id,
                                                                                 role.id,
                                                                                 created=ctx.message.created_at)
-                    message = await self.make_message("tempmute",ctx,user=user,reason=reason,time=time.human_timedelta(when.dt))
+                    message = await ModLogUtils.assemble_message(
+                        "tempmute",
+                        guild=ctx.guild,
+                        user=user,
+                        mod=ctx.author,
+                        bot=self.bot,
+                        reason=reason,
+                        time=time.human_timedelta(when.dt)
+                    )
                 else:
-                    message = await self.make_message("mute",ctx,user=user,reason=reason)
+                    message = await ModLogUtils.assemble_message(
+                        "mute",
+                        guild=ctx.guild,
+                        user=user,
+                        mod=ctx.author,
+                        bot=self.bot,
+                        reason=reason,
+                    )
 
-                await channel.send(message)
+                if channel:
+                    await channel.send(message)
                 
                 user_message = f"{mod_config.custom_emojis['infow']} You have been muted in **{ctx.guild.name}** for \"{reason}\""
                 try:
@@ -204,8 +223,17 @@ class Mod(commands.Cog):
             try:
                 await user.remove_roles(role,reason=reason)
 
-                message = await self.make_message("unmute",ctx,user=user,reason=reason)
-                await channel.send(message)
+                if channel:
+                    message = await ModLogUtils.assemble_message(
+                        "unmute",
+                        guild=ctx.guild,
+                        user=user,
+                        mod=ctx.author,
+                        bot=self.bot,
+                        reason=reason,
+
+                    )
+                    await channel.send(message)
                 
                 user_message = f"{mod_config.custom_emojis['infow']} You have been unmuted in **{ctx.guild.name}** for \"{reason}\""
                 try:
@@ -240,8 +268,17 @@ class Mod(commands.Cog):
 
                 await user.kick(reason=reason)
 
-                message = await self.make_message("kick",ctx,user=user,reason=reason)
-                await channel.send(message)
+                if channel:
+                    message = await ModLogUtils.assemble_message(
+                        "kick",
+                        guild=ctx.guild,
+                        user=user,
+                        mod=ctx.author,
+                        bot=self.bot,
+                        reason=reason,
+
+                    )
+                    await channel.send(message)
             
                 final_string += f"{mod_config.custom_emojis['check']} Successfully kicked <@{user.id}>!\n"
             except Exception as err:
@@ -259,6 +296,7 @@ class Mod(commands.Cog):
         final_string = ""
         config = await mod_cache.get_guild_config(ctx.bot,ctx.guild.id)
         channel = config and config.mod_logs
+        special_user = None
 
         for user in users:
             try:
@@ -267,12 +305,28 @@ class Mod(commands.Cog):
                     await user.send(user_message)
                 except:
                     pass
+                
+                await ctx.guild.ban(user, reason=reason, delete_message_days=7)
 
-                await user.ban(reason=reason)
+                if type(user) not in [discord.User,discord.Member]:
+                    if self.bot.special_user_cache.get(user.id):
+                        special_user = self.bot.special_user_cache[user.id]
+                    else:
+                        special_user = await self.bot.fetch_user(user.id)
+                        self.bot.special_user_cache[user.id] = special_user
 
-                message = await self.make_message("ban",ctx,user=user,reason=reason)
-                await channel.send(message)
-            
+                if channel:
+                    message = await ModLogUtils.assemble_message(
+                        "ban",
+                        guild=ctx.guild,
+                        user=special_user if special_user else user,
+                        mod=ctx.author,
+                        bot=self.bot,
+                        reason=reason,
+
+                    )
+                    await channel.send(message)
+
                 final_string += f"{mod_config.custom_emojis['check']} Successfully banned <@{user.id}>!\n"
             except Exception as err:
                 print(err)
@@ -298,12 +352,29 @@ class Mod(commands.Cog):
                 except:
                     pass
 
-                await user.ban(reason=reason,delete_message_days=7)
+                await ctx.guild.ban(user, reason=reason, delete_message_days=7)
                 await ctx.guild.unban(user, reason=f"Unban after soft ban by {ctx.author} (ID:{ctx.author.id})")
 
-                message = await self.make_message("ban",ctx,user=user,reason=reason)
-                await channel.send(message)
-            
+                if type(user) not in [discord.User,discord.Member]:
+                    if self.bot.special_user_cache.get(user.id):
+                        special_user = self.bot.special_user_cache[user.id]
+                    else:
+                        special_user = await self.bot.fetch_user(user.id)
+                        self.bot.special_user_cache[user.id] = special_user
+                        
+
+                if channel:
+                    message = await ModLogUtils.assemble_message(
+                        "ban",
+                        guild=ctx.guild,
+                        user=special_user if special_user else user,
+                        mod=ctx.author,
+                        bot=self.bot,
+                        reason=reason,
+
+                    )
+                    await channel.send(message)
+                
                 final_string += f"{mod_config.custom_emojis['check']} Successfully soft-banned <@{user.id}>!\n"
             except Exception as err:
                 print(err)
@@ -334,8 +405,17 @@ class Mod(commands.Cog):
 
                 await ctx.guild.unban(user, reason=reason)
 
-                message = await self.make_message("unban",ctx,user=user,reason=reason)
-                await channel.send(message)
+                if channel:
+                    message = await ModLogUtils.assemble_message(
+                        "unban",
+                        guild=ctx.guild,
+                        user=user,
+                        mod=ctx.author,
+                        bot=self.bot,
+                        reason=reason,
+
+                    )
+                    await channel.send(message)
             
                 final_string += f"{mod_config.custom_emojis['check']} Successfully unbanned <@{user.id}>!\n"
             except Exception as err:
@@ -362,10 +442,27 @@ class Mod(commands.Cog):
                 except:
                     pass
 
-                await user.ban(reason=reason, delete_message_days=0)
+                await ctx.guild.ban(user, reason=reason, delete_message_days=0)
 
-                message = await self.make_message("ban",ctx,user=user,reason=reason)
-                await channel.send(message)
+                if type(user) not in [discord.User,discord.Member]:
+                    if self.bot.special_user_cache.get(user.id):
+                        special_user = self.bot.special_user_cache[user.id]
+                    else:
+                        special_user = await self.bot.fetch_user(user.id)
+                        self.bot.special_user_cache[user.id] = special_user
+                        
+
+                if channel:
+                    message = await ModLogUtils.assemble_message(
+                        "ban",
+                        guild=ctx.guild,
+                        user=special_user if special_user else user,
+                        mod=ctx.author,
+                        bot=self.bot,
+                        reason=reason,
+
+                    )
+                    await channel.send(message)
             
                 final_string += f"{mod_config.custom_emojis['check']} Successfully banned <@{user.id}>!\n"
             except Exception as err:
@@ -407,16 +504,8 @@ class Mod(commands.Cog):
 
         for user in users:
             try:
-                # user_message = f"{mod_config.custom_emojis['infow']} You have been banned from **{ctx.guild.name}** for \"{reason}\""
-                # try:
-                #     await user.send(user_message)
-                # except:
-                #     pass
 
                 await user.move_to(None, reason=reason)
-
-                # message = await self.make_message("ban",ctx,user=user,reason=reason)
-                # await channel.send(message)
             
                 final_string += f"{mod_config.custom_emojis['check']} Successfully voice kicked <@{user.id}>!\n"
             except Exception as err:
