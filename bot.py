@@ -321,7 +321,7 @@ class TeddyBear(commands.AutoShardedBot):
             except Exception as err:
                 log.error(f"Error while loading extension \"{extension}\".",exc_info=err)   
 
-        with open("database.sql", "r") as f:
+        with open("database.sql") as f:
             await self.pool.execute(f.read())
     
         app_info = await self.application_info()
