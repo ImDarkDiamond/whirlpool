@@ -10,6 +10,7 @@ import sys
 from collections import Counter, deque, defaultdict
 import config
 import asyncpg
+import os
 
 log = logging.getLogger(__name__)
 
@@ -43,7 +44,7 @@ class TeddyBear(commands.AutoShardedBot):
             intents=intents
         )
 
-        self.client_id = config.client_id
+        self.client_id = os.environ["CLIENT_ID"]
         self.session = aiohttp.ClientSession(loop=self.loop)
         self.resumes = defaultdict(list)
         self.special_user_cache = dict()
@@ -97,7 +98,7 @@ class TeddyBear(commands.AutoShardedBot):
 
     async def generate_gist(self, before: str, after: str=None) -> dict:
 
-        if not config.gist_token:
+        if not os.environ["GIST_TOKEN"]:
             return
 
         payload = {
@@ -118,7 +119,7 @@ class TeddyBear(commands.AutoShardedBot):
             data=json.dumps(payload),
             headers={
                 "Accept": "application/vnd.github.v3+json",
-                "Authorization": "token %s" % config.gist_token
+                "Authorization": "token %s" % os.environ["GIST_TOKEN"]
             }
         )
 
@@ -310,7 +311,7 @@ class TeddyBear(commands.AutoShardedBot):
             self.uptime = datetime.datetime.utcnow()
 
         self.pool = await asyncpg.create_pool(
-            config.postgresql,
+            os.environ["POSTGRESQL"],
             max_size=150
         )
 
@@ -320,7 +321,7 @@ class TeddyBear(commands.AutoShardedBot):
             except Exception as err:
                 log.error(f"Error while loading extension \"{extension}\".",exc_info=err)   
 
-        with open("database.sql") as f:
+        with open("database.sql", "r") as f:
             await self.pool.execute(f.read())
     
         app_info = await self.application_info()
@@ -335,7 +336,8 @@ class TeddyBear(commands.AutoShardedBot):
 
     @discord.utils.cached_property
     def stats_webhook(self):
-        wh_id, wh_token = self.config.stat_webhook
+        wh_id = os.enviro["WEBHOOK_ID"]
+        wh_token = os.environ["WEBHOOK_TOKEN"]
         hook = discord.Webhook.partial(id=wh_id, token=wh_token, adapter=discord.AsyncWebhookAdapter(self.session))
         return hook
     
@@ -401,7 +403,7 @@ class TeddyBear(commands.AutoShardedBot):
 
     def run(self):
         try:
-            super().run(config.token, reconnect=True)
+            super().run(os.environ["TOKEN"], reconnect=True)
         finally:
             with open('prev_events.log', 'w', encoding='utf-8') as fp:
                 for data in self._prev_events:

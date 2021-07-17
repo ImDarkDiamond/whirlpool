@@ -1,0 +1,4 @@
+docker-compose.yaml
+LICENSE.txt
+.env
+.database.env

@@ -57,6 +57,8 @@ def mod_role_or_perms(**perms):
     async def predicate(ctx):
         config = await mod_cache.get_guild_config(ctx.bot,ctx.guild.id)
 
+        print(config)
+
         if config.modrole:
             if config.modrole in [role.id for role in ctx.author.roles]:
                 return True

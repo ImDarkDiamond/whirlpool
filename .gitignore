@@ -8,3 +8,5 @@ migrations/current-*.json
 *.log
 venv/*
 config.py
+.env
+.database.env

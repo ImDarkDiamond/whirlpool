@@ -74,5 +74,7 @@ async def get_guild_config(bot, guild_id):
     async with bot.pool.acquire(timeout=300.0) as con:
         record = await con.fetchrow(query, guild_id)
         if record is not None:
-            return await ModConfig.from_record(record, bot)
+            dumb = await ModConfig.from_record(record, bot)
+            print(dumb)
+            return dumb
         return None
