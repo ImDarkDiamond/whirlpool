@@ -5,11 +5,14 @@ import modlog_utils
 import pytz
 from discord.ext import commands
 from utilities import userfriendlly, time as TimeTime
+import datetime
+from logging_ import ModLogUtils
 class Strikes(object):
-    def __init__(self, ctx, user):
+    def __init__(self, bot, guild, mod, user):
         self.user = user
-        self.ctx = ctx
-        self.bot = ctx.bot
+        self.guild = guild
+        self.mod = mod
+        self.bot = bot
         self.cache: mod_cache.ModConfig = None
     
     def actions(self, action, *args, **kwargs):
@@ -17,27 +20,30 @@ class Strikes(object):
         return method(*args, **kwargs)
 
     async def fill_cache(self):
-        self.cache = await mod_cache.get_guild_config(self.bot, self.ctx.guild.id)
+        self.cache = await mod_cache.get_guild_config(self.bot, self.guild.id)
 
     async def send_modlog(self, action: str, reason: str, **kwargs) -> None:
         channel = self.cache and self.cache.mod_logs
-        case_id = await modlog_utils.insert_mod_action(
-            self.ctx,
+        case_id = await ModLogUtils.insert(
+            self.bot,
+            guild=self.guild,
             target_id=self.user.id,
             reason=reason,
-            action_type=action
+            action_type=action,
+            mod=self.mod
         )
 
         if channel:
 
-            message = await modlog_utils.assemble_message(
+            message = await ModLogUtils.assemble_message(
                 action,
-                ctx=self.ctx,
                 reason=reason,
-                mod=self.bot.user,
+                mod=self.mod,
                 user=self.user,
-                case_id=case_id,
-                time=kwargs.get("time")
+                guild=self.guild,
+                bot=self.bot,
+                time=kwargs.get("time"),
+                case_id=case_id
             )
 
             await channel.send(message)
@@ -55,11 +61,11 @@ class Strikes(object):
                     reminder = self.bot.get_cog('Reminder')
                     duration = userfriendlly.FutureTime(time).dt.replace(tzinfo=pytz.UTC)
 
-                    timer = await reminder.create_timer(duration, 'tempmute', self.ctx.guild.id,
-                                                                            self.ctx.author.id,
+                    timer = await reminder.create_timer(duration, 'tempmute', self.guild.id,
+                                                                            self.mod.id,
                                                                             self.user.id,
                                                                             mute_role.id,
-                                                                            created=self.ctx.message.created_at)
+                                                                            created=datetime.datetime.now().replace(tzinfo=pytz.UTC))
 
                 await self.user.add_roles(
                     mute_role,
@@ -69,7 +75,7 @@ class Strikes(object):
                 await self.send_modlog(
                     "mute" if not time else "tempmute", 
                     reason=reason,
-                    time=TimeTime.human_timedelta(duration)
+                    time=TimeTime.human_timedelta(duration) if time else None
                 )
 
         except Exception as err:
@@ -80,7 +86,7 @@ class Strikes(object):
         strikes = kwargs.get('strikes')
         reason = f"[{kwargs.get('old_strikes')} → {strikes} strikes] Automatic kick for reaching `{strikes}` strikes."
 
-        await self.ctx.guild.kick(
+        await self.guild.kick(
             self.user,
             reason=reason
         )
@@ -98,17 +104,16 @@ class Strikes(object):
             reminder = self.bot.get_cog('Reminder')
             duration = userfriendlly.FutureTime(time).dt.replace(tzinfo=pytz.UTC)
 
-            timer = await reminder.create_timer(duration, 'tempban', self.ctx.guild.id,
-                                                                    self.ctx.author.id,
+            timer = await reminder.create_timer(duration, 'tempban', self.guild.id,
+                                                                    self.mod.id,
                                                                     self.user.id,
                                                                     None,
-                                                                    created=self.ctx.message.created_at)
+                                                                    created=datetime.datetime.now().replace(tzinfo=pytz.UTC))
 
-        await self.ctx.guild.ban(
-            "ban" if not time else "tempban", 
+        await self.guild.ban(
+            self.user,
             reason=reason,
-            time=TimeTime.human_timedelta(duration)
         )
     
 
-        await self.send_modlog("ban", reason=reason)
+        await self.send_modlog("ban" if not time else "tempban", reason=reason, time=TimeTime.human_timedelta(duration))

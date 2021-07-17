@@ -3,6 +3,7 @@ from operator import mod
 from discord.ext import commands, menus
 from discord.ext.commands.core import command
 from utilities import cache, checks, time
+from logging_ import ModLogUtils
 import discord
 import textwrap
 import datetime
@@ -76,9 +77,8 @@ class Strikes(commands.Cog):
                     pass
 
                 if channel:
-                    message = await modlog_utils.assemble_message(
+                    message = await ModLogUtils.assemble_message(
                         "strike_add",
-                        ctx=ctx,
                         strikes_added=strikes,
                         strikes={
                             'old':update['strikes']-strikes,
@@ -86,7 +86,9 @@ class Strikes(commands.Cog):
                         },
                         reason=reason,
                         mod=ctx.author,
-                        user=user
+                        user=user,
+                        guild=ctx.guild,
+                        bot=self.bot
                     )
 
                     await channel.send(message)
@@ -120,9 +122,8 @@ class Strikes(commands.Cog):
         channel = config and config.mod_logs
 
         async def send_modlog(new_strikes:int, old_strikes:int) -> None:
-            message = await modlog_utils.assemble_message(
+            message = await ModLogUtils.assemble_message(
                 "pardon",
-                ctx=ctx,
                 strikes_removed=strikes,
                 strikes={
                     'old':old_strikes,
@@ -130,7 +131,9 @@ class Strikes(commands.Cog):
                 },
                 reason=reason,
                 mod=ctx.author,
-                user=user
+                user=user,
+                guild=ctx.guild,
+                bot=self.bot
             )
 
             await channel.send(message)

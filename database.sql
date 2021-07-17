@@ -20,9 +20,18 @@ CREATE TABLE IF NOT EXISTS guild_settings (
     "messagelogs"       BIGINT,
     "serverlogs"        BIGINT,
     "voicelogs"         BIGINT,
+    "avatarlogs"        BIGINT,
     "mutedmembers"      BIGINT[] DEFAULT '{}',
+    "ignoredroles"      BIGINT[] DEFAULT '{}',
+    "ignoredchannels"   BIGINT[] DEFAULT '{}',
+    "ignoredusers"      BIGINT[] DEFAULT '{}',
     
-    "max_newlines"      BIGINT DEFAULT 0
+    "max_newlines"      BIGINT DEFAULT 0,
+    "max_mentions"      BIGINT DEFAULT 0,
+    "max_role_mentions" BIGINT DEFAULT 0,
+    "invite_strikes"    BIGINT DEFAULT 0,
+    "everyone_strikes"  BIGINT DEFAULT 0,
+    "copypasta_strikes" BIGINT DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS guild_strikes ( 
@@ -60,13 +69,3 @@ CREATE TABLE IF NOT EXISTS reminders (
     "event"             VARCHAR,
     "extra"             JSON DEFAULT '{}'::JSONB
 );
-
--- SAVE FOR LATER
--- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
--- CREATE TABLE IF NOT EXISTS muted_members (
---     "guild_id"          BIGINT NOT NULL,
---     "member_id"         BIGINT NOT NULL,
-
---                         PRIMARY KEY(guild_id,member_id)
--- )
--- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 

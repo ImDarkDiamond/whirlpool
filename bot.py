@@ -38,7 +38,7 @@ class TeddyBear(commands.AutoShardedBot):
         super().__init__(
             command_prefix=_prefix_callable,
             description="A vortex like discord bot written in python",
-            fetch_offline_members=False,
+            fetch_offline_members=True,
             allowed_mentions=allowed_mentions,
             intents=intents
         )
@@ -68,6 +68,7 @@ class TeddyBear(commands.AutoShardedBot):
             "cogs.StrikeHandler",
             "cogs.mod",
             "cogs.reminders",
+            "cogs.automod",
             "logging_.BasicLogging",
             "logging_.VoiceLogging",
             "logging_.ModLogs"

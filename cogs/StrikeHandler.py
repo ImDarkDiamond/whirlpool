@@ -8,35 +8,50 @@ import datetime
 import traceback
 import modlog_utils
 import mod_cache
-
+from logging_ import ModLogUtils
 
 class StrikeHandler(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
     @commands.Cog.listener()
-    async def on_strike_add(self, ctx, user: typing.Union[discord.Member,discord.User], strikes, **kwargs):
-        StrikeHandler2 = StrikeSwitcher.Strikes(ctx, user)
+    async def on_strike_add(self, guild, user: typing.Union[discord.Member,discord.User], strikes, **kwargs):
+        StrikeHandler2 = StrikeSwitcher.Strikes(self.bot, guild, self.bot.user, user)
         await StrikeHandler2.fill_cache()
 
-        config = await mod_cache.get_guild_config(self.bot,ctx.guild.id)
+        config = await mod_cache.get_guild_config(self.bot,guild.id)
         channel = config and config.mod_logs
         mute_role = config and config.mute_role
 
+                    # message = await ModLogUtils.assemble_message(
+                    #     "strike_add",
+                    #     strikes_added=strikes,
+                    #     strikes={
+                    #         'old':update['strikes']-strikes,
+                    #         'new':update['strikes']
+                    #     },
+                    #     reason=reason,
+                    #     mod=ctx.author,
+                    #     user=user,
+                    #     guild=ctx.guild,
+                    #     bot=self.bot
+                    # )
+
         async def send_modlog(action: str, reason: str) -> None:
-            message = await modlog_utils.assemble_message(
+            message = await ModLogUtils.assemble_message(
                 action,
-                ctx=ctx,
                 reason=reason,
-                mod=ctx.bot.user,
-                user=user
+                mod=self.bot.user,
+                user=user,
+                bot=self.bot,
+                guild=guild
             )
 
             await channel.send(message)
         
         async with self.bot.pool.acquire() as conn:
             punishments = """SELECT * FROM punishments WHERE guild_id = $1"""
-            punishments = await conn.fetch(punishments, ctx.guild.id)
+            punishments = await conn.fetch(punishments, guild.id)
             punishments = [x for x in punishments]
 
             if not punishments:

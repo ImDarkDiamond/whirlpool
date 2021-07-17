@@ -223,6 +223,11 @@ class Mod(commands.Cog):
             try:
                 await user.remove_roles(role,reason=reason)
 
+                delete_temp = """DELETE FROM reminders WHERE 
+                                extra #>> '{args,2}' = $1 AND extra #>> '{args,0}' = $2 
+                                AND event = $3"""
+                await self.bot.pool.execute(delete_temp,str(user.id),str(ctx.guild.id),"tempmute")     
+
                 if channel:
                     message = await ModLogUtils.assemble_message(
                         "unmute",
@@ -395,8 +400,13 @@ class Mod(commands.Cog):
         for user in users:
             user = user.user
 
-
             try:
+
+                delete_temp = """DELETE FROM reminders WHERE 
+                                extra #>> '{args,2}' = $1 AND extra #>> '{args,0}' = $2 
+                                AND event = $3"""
+                await self.bot.pool.execute(delete_temp,str(user.id),str(ctx.guild.id),"tempban")     
+
                 user_message = f"{mod_config.custom_emojis['infow']} You have been unbanned from **{ctx.guild.name}** for \"{reason}\""
                 try:
                     await user.send(user_message)

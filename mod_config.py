@@ -65,3 +65,8 @@ custom_emojis = {
     "check": "<:greenCheckBox:865423233956315167>", #"<:Check:864580283239235615>",
     "infob": "<:black_info:864580283218264064>"
 }
+
+# Regexes
+invite_regex = r"((https?:\/\/)?discord\.gg\/)|(https?:\/\/((ptb\.)|(canary\.))?discord\.com\/invite\/)|(https?:\/\/discordapp\.com\/invite\/)([a-zA-Z0-9\-]+)"
+everyone_regex = r"((\s)*)?(\@everyone)((\s)*)"
+here_regex = r"((\s)*)?(\@here)((\s)*)"

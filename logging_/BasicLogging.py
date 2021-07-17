@@ -103,7 +103,7 @@ class BasicLogging(commands.Cog):
                         )
 
                         image = await self.assemble_image(before_img,after_img,id=before.id)
-                        await config.server_logs.send(message,file=image)
+                        await config.avatar_logs.send(message,file=image)
         except Exception as err:
             print(f"err: {err}")
                     
